@@ -1,0 +1,86 @@
+{
+  "site": {
+    "title": "星屑文库",
+    "subtitle": "把温柔的故事，收进一片只属于你的银河",
+    "owner": "夜航",
+    "requirePassword": true,
+    "passwordHint": "这是我们之间的小暗号",
+    "passwordHash": "1da0672bd372f181d79fd5391aaeda10d256ebfd95ddb09ab9b51e52affbdbfc"
+  },
+  "series": [
+    { "id": "s_galaxy", "name": "银河彼端", "fandom": "原创宇宙", "cp": "凛 × 昭", "desc": "两束光跨越星海，终于在轨道交汇。" },
+    { "id": "s_nightboat", "name": "夜航船", "fandom": "原创都市", "cp": "沈 × 陆", "desc": "末班船上的相遇，比月光更慢一点。" }
+  ],
+  "articles": [
+    {
+      "id": "a_galaxy_1",
+      "title": "第一章 · 引力之外",
+      "seriesId": "s_galaxy",
+      "order": 1,
+      "fandom": "原创宇宙",
+      "cp": "凛 × 昭",
+      "tags": ["温柔", "治愈", "慢热"],
+      "authorNote": "第一次写这个设定，希望你喜欢这种很慢很轻的节奏。有什么想法都可以告诉我～",
+      "cover": "✦",
+      "source": { "type": "weibo", "url": "https://weibo.com/example/galaxy1" },
+      "updatedAt": "2026-06-20",
+      "content": "<p>星图上没有标注的那颗小卫星，绕着一颗无人命名的恒星，转了不知多少年。</p><p>凛在观测窗前站了很久，久到舱内的灯光替他数清了第三十七圈轨道。他忽然想，如果引力是宇宙唯一诚实的语言，那么所有的靠近，是不是都只是被允许的下坠。</p><p>通讯器亮了。昭的声音从八千光年外传来，带着一点点失真，却依然温柔：<em>“你那边，看到星星了吗？”</em></p><p>“看到了。”凛说，“也看到你了。”</p>"
+    },
+    {
+      "id": "a_galaxy_2",
+      "title": "第二章 · 轨道交汇",
+      "seriesId": "s_galaxy",
+      "order": 2,
+      "fandom": "原创宇宙",
+      "cp": "凛 × 昭",
+      "tags": ["温柔", "HE", "重逢"],
+      "authorNote": "谢谢昨天留言的大家，这章让两个人终于见到了。下章写他们怎么过第一个共同日出。",
+      "cover": "✧",
+      "source": { "type": "lofter", "url": "https://xxx.lofter.com/post/galaxy2" },
+      "updatedAt": "2026-06-28",
+      "content": "<p>交汇不是一瞬间的事。是两束光彼此确认方向之后，用很长很长的沉默，慢慢把距离磨成温度。</p><p>昭伸出手，掌心朝上，像是在接一颗刚落下的雪。凛把指尖放上去，发现对方的体温远比星图测算的更接近。</p><p><strong>“原来你真的在这里。”</strong></p><p>“我一直都在。”</p><p>舷窗外，那颗无名恒星第一次被两个人同时看见，于是它从此有了名字。</p>"
+    },
+    {
+      "id": "a_night_1",
+      "title": "第一章 · 末班船",
+      "seriesId": "s_nightboat",
+      "order": 1,
+      "fandom": "原创都市",
+      "cp": "沈 × 陆",
+      "tags": ["都市", "相遇", "慢热"],
+      "authorNote": "灵感来自某天很晚的末班地铁。陆这个人我很喜欢，话少但可靠。",
+      "cover": "☾",
+      "source": { "type": "weibo", "url": "https://weibo.com/example/night1" },
+      "updatedAt": "2026-07-02",
+      "content": "<p>末班船靠岸时，码头只剩一盏昏黄的灯。</p><p>沈迟疑地踏上甲板，看见陆已经站在船尾，披着一件旧外套，像是等了很久，又像是恰好也在。</p><p>“去哪儿？”陆问，没有回头。</p><p>“随便。”沈说，“你开哪儿，我去哪儿。”</p><p>船开了。江风把这句话吹得很轻，轻到像一句还没说出口的喜欢。</p>"
+    },
+    {
+      "id": "a_night_2",
+      "title": "第二章 · 比月光慢",
+      "seriesId": "s_nightboat",
+      "order": 2,
+      "fandom": "原创都市",
+      "cp": "沈 × 陆",
+      "tags": ["都市", "日常", "温柔"],
+      "authorNote": "这章很日常，写他们怎么一起喝完一壶茶。慢一点也没关系。",
+      "cover": "☾",
+      "source": { "type": "lofter", "url": "https://xxx.lofter.com/post/night2" },
+      "updatedAt": "2026-07-10",
+      "content": "<p>陆的茶泡得极慢，慢到沈以为他在故意拖延时间。</p><p>“你急什么。”陆把茶杯推过来，热气模糊了他一贯冷淡的眉眼。</p><p>沈接过，指腹碰到杯壁，也碰到陆的指尖。两个人都没缩回去。</p><p>窗外的月光落进来，比他们任何一个人的动作，都慢上一点。</p>"
+    },
+    {
+      "id": "a_standalone_1",
+      "title": "碎星 · 一则短打",
+      "seriesId": null,
+      "order": 0,
+      "fandom": "原创短篇",
+      "cp": "无差",
+      "tags": ["短篇", "治愈", "微甜"],
+      "authorNote": "睡不着的时候写的。希望大家都能被温柔对待。",
+      "cover": "✶",
+      "source": { "type": "weibo", "url": "https://weibo.com/example/short1" },
+      "updatedAt": "2026-07-14",
+      "content": "<p>有人把心事折成纸船，放进银河里。</p><p>纸船漂了很远，终于被一双手轻轻捞起。那双手的主人低头看了一会儿，笑了：<em>“原来你也在这里，把星星弄丢了。”</em></p><p>于是两颗弄丢的星星，被同一只手，重新放回了夜空。</p>"
+    }
+  ]
+}

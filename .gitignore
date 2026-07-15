@@ -1,0 +1,5 @@
+# 预览辅助文件
+/preview.html
+/shot_*.png
+.DS_Store
+node_modules/

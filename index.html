@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>星屑文库 · 你的同人文银河</title>
+  <meta name="description" content="一个温柔的、属于你自己的同人文收藏地。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <!-- 星空背景 -->
+  <canvas id="starfield"></canvas>
+  <div class="nebula"></div>
+
+  <!-- 密码门 -->
+  <div id="gate" class="gate">
+    <div class="gate-card">
+      <div class="gate-mark">✦</div>
+      <h1 class="gate-title">星屑文库</h1>
+      <p class="gate-sub">这是一片只对你开放的银河</p>
+      <form id="gate-form" autocomplete="off">
+        <input id="nick" class="gate-input" type="text" placeholder="留下你的昵称" maxlength="20" />
+        <input id="pwd" class="gate-input" type="password" placeholder="输入浏览密码" />
+        <button id="gate-enter" class="gate-btn" type="submit">推开星门</button>
+        <p id="gate-hint" class="gate-hint"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="app" class="app hidden">
+    <header class="topbar">
+      <div class="brand" data-go="home">
+        <span class="brand-mark">✦</span>
+        <span class="brand-name">星屑文库</span>
+      </div>
+      <nav class="nav">
+        <a data-go="home">全部</a>
+        <a data-go="series">合集</a>
+        <a data-go="add">添加文章</a>
+      </nav>
+      <div class="who">
+        <span id="nick-display" class="nick"></span>
+        <button id="logout" class="logout" title="退出">✕</button>
+      </div>
+    </header>
+
+    <main id="view" class="view"></main>
+
+    <footer class="foot">
+      <span>星屑文库 · 由 <span id="owner-name"></span> 收藏于一片温柔的银河</span>
+    </footer>
+  </div>
+
+  <script src="assets/starfield.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
