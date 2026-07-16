@@ -6,8 +6,12 @@
      真实「服务端密码校验 + 链接抓取 + 文章持久化」
    ========================================================= */
 const CONFIG = {
-  // 后端 API 基址（Cloudflare Worker 部署后填入，例如 https://api.your-domain.workers.dev）
-  // 留空则使用 Demo 模式：前端哈希校验 + 手动粘贴 + 内存追加
+  // 后端模式：部署到 EdgeOne Pages（函数与前端同域）后设为 true，
+  // 前端用相对路径调用 /verify、/fetch、/articles、/visit —— 不被墙、无跨域。
+  // 设为 false 则回退 Demo 模式：前端哈希校验 + 手动粘贴 + 内存追加。
+  BACKEND: true,
+  // API 基址。同域部署留空即可（"" + "/verify" = "/verify"）。
+  // 若前后端分离部署，可填完整域名，例如 https://your-site.edgeone.app
   API_BASE: "",
   DATA_URL: "data/articles.json"
 };
@@ -36,6 +40,17 @@ function fmtContent(raw) {
   if (/<[a-z][\s\S]*>/i.test(raw)) return raw; // 已含 HTML 标签
   return raw.split(/\n{1,}/).map((p) => `<p>${esc(p)}</p>`).join("");
 }
+/* 访问打点：静默上报，失败不影响页面。articleId 可选（阅读文章时带上） */
+function pingVisit(articleId) {
+  if (!CONFIG.BACKEND) return;
+  try {
+    fetch(CONFIG.API_BASE + "/visit", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ articleId: articleId || "", path: location.hash || "/" }),
+      keepalive: true
+    }).catch(() => {});
+  } catch (e) {}
+}
 
 /* ---------- 数据加载 ---------- */
 async function loadData() {
@@ -61,7 +76,7 @@ function setupGate() {
     if (!pwd) { $("#gate-hint").textContent = "需要输入密码哦"; return; }
 
     let ok = false;
-    if (CONFIG.API_BASE) {
+    if (CONFIG.BACKEND) {
       // 真实后端校验（更强保护）
       try {
         const r = await fetch(CONFIG.API_BASE + "/verify", {
@@ -86,6 +101,7 @@ function openApp() {
   $("#app").classList.remove("hidden");
   const nick = localStorage.getItem("nick");
   $("#nick-display").textContent = nick ? `欢迎，${nick}` : "";
+  pingVisit();
   route();
 }
 $("#logout")?.addEventListener("click", () => {
@@ -224,6 +240,7 @@ function renderSeries(id) {
 function renderArticle(id) {
   const a = DATA.articles.find((x) => x.id === id);
   if (!a) return renderHome();
+  pingVisit(id);
   const s = seriesById(a.seriesId);
   let prev = null, next = null;
   if (s) {
@@ -261,9 +278,9 @@ function renderAdd() {
   $("#view").innerHTML = `
     <div class="form-wrap">
       <div class="section-head"><h2>添加文章</h2><p>粘贴微博 / Lofter 链接，或从下方手动填写。</p></div>
-      <div class="note-box" id="add-note">${CONFIG.API_BASE
+      <div class="note-box" id="add-note">${CONFIG.BACKEND
         ? "已连接后端：可自动抓取链接内容并持久化保存。"
-        : "当前为 Demo 模式：抓取与保存需后端支持。可手动填写正文，提交后会在本次浏览中显示（刷新不保留）。接上 Cloudflare Worker 后即支持真实抓取与持久化。"}</div>
+        : "当前为 Demo 模式：抓取与保存需后端支持。可手动填写正文，提交后会在本次浏览中显示（刷新不保留）。部署到 EdgeOne Pages 后即支持真实抓取与持久化。"}</div>
       <div class="field">
         <label>原文链接（微博 / Lofter）</label>
         <div class="fetch-bar">
@@ -315,7 +332,7 @@ async function onFetch() {
   if (!url) { toast("请先填写链接"); return; }
   const btn = $("#f-fetch"); btn.disabled = true; btn.textContent = "抓取中…";
   try {
-    if (!CONFIG.API_BASE) throw new Error("no-api");
+    if (!CONFIG.BACKEND) throw new Error("no-api");
     const r = await fetch(CONFIG.API_BASE + "/fetch?url=" + encodeURIComponent(url));
     const d = await r.json();
     $("#f-title").value = d.title || "";
@@ -336,11 +353,13 @@ async function onSubmit() {
   const content = $("#f-content").value.trim();
   if (!title || !content) { toast("标题和正文都不能空"); return; }
   let seriesId = $("#f-series").value;
+  let newSeries = null;
   if (seriesId === "__new__") {
     const name = $("#f-newseries").value.trim();
     if (!name) { toast("请填写新合集名称"); return; }
     seriesId = "s_" + Date.now();
-    DATA.series.push({ id: seriesId, name, fandom: $("#f-fandom").value.trim(), cp: $("#f-cp").value.trim(), desc: "" });
+    newSeries = { id: seriesId, name, fandom: $("#f-fandom").value.trim(), cp: $("#f-cp").value.trim(), desc: "" };
+    DATA.series.push(newSeries);
   }
   const art = {
     id: "a_" + Date.now(),
@@ -356,9 +375,10 @@ async function onSubmit() {
     content: fmtContent(content)
   };
   try {
-    if (CONFIG.API_BASE) {
+    if (CONFIG.BACKEND) {
       await fetch(CONFIG.API_BASE + "/articles", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(art)
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ article: art, series: newSeries })
       });
       DATA.articles.push(art);
       toast("已保存并发布");

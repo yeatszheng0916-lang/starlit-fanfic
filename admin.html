@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>星屑文库 · 管理后台</title>
+<style>
+:root{
+  --bg:#05060c; --bg-soft:#0a0e1a; --ink:#e9edf7; --ink-soft:#aab6d2; --ink-faint:#6f7da0;
+  --blue:#9fb4d8; --blue-bright:#c5d6f2; --blue-deep:#5d73a0;
+  --line:rgba(159,180,216,.16); --glass:rgba(18,24,42,.55); --glass-2:rgba(28,36,60,.5);
+  --glow:rgba(150,180,230,.35); --radius:16px; --shadow:0 18px 50px -20px rgba(0,0,0,.8);
+  --ok:#7fd6a0; --warn:#e8c07d; --danger:#e88b8b;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  background:radial-gradient(120% 120% at 50% -10%,#0b1124 0%,var(--bg) 55%);
+  color:var(--ink);min-height:100vh;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+.nebula{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(40% 50% at 20% 15%,rgba(99,130,200,.18),transparent 70%),
+    radial-gradient(45% 45% at 85% 80%,rgba(140,120,200,.14),transparent 70%),
+    radial-gradient(35% 40% at 60% 40%,rgba(90,160,200,.10),transparent 70%);
+  filter:blur(8px)}
+canvas#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit}
+
+/* ---------- 登录门 ---------- */
+.gate{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 120% at 50% 30%,#0a1024 0%,#04050b 70%);backdrop-filter:blur(4px)}
+.gate-card{width:min(90vw,380px);text-align:center;padding:46px 34px;border-radius:22px;
+  background:var(--glass);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(18px)}
+.gate-card h1{font-size:22px;font-weight:600;letter-spacing:2px;margin-bottom:6px}
+.gate-card .sub{color:var(--ink-faint);font-size:13px;margin-bottom:26px}
+.gate-card input{width:100%;padding:13px 15px;margin-bottom:14px;border-radius:12px;
+  background:rgba(10,14,26,.6);border:1px solid var(--line);color:var(--ink);font-size:14px;outline:none;transition:.2s}
+.gate-card input:focus{border-color:var(--blue-deep);box-shadow:0 0 0 3px rgba(93,115,160,.18)}
+.hint{min-height:18px;font-size:12px;color:var(--warn);margin-bottom:8px}
+
+/* ---------- 布局 ---------- */
+.app{position:relative;z-index:2;display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.side{padding:26px 18px;border-right:1px solid var(--line);background:rgba(8,11,20,.4);backdrop-filter:blur(10px);
+  position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{font-size:18px;font-weight:600;letter-spacing:2px;margin-bottom:4px}
+.brand span{color:var(--blue-bright)}
+.brand-sub{font-size:11px;color:var(--ink-faint);margin-bottom:28px;letter-spacing:1px}
+.nav{display:flex;flex-direction:column;gap:4px;flex:1}
+.nav a{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:11px;color:var(--ink-soft);
+  font-size:14px;text-decoration:none;transition:.18s;border:1px solid transparent}
+.nav a .ic{width:18px;text-align:center;opacity:.85}
+.nav a:hover{background:var(--glass-2);color:var(--ink)}
+.nav a.active{background:linear-gradient(120deg,rgba(93,115,160,.28),rgba(93,115,160,.1));
+  color:var(--blue-bright);border-color:var(--line)}
+.side-foot{font-size:11px;color:var(--ink-faint);border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.side-foot button{width:100%;background:transparent;border:1px solid var(--line);color:var(--ink-soft);
+  padding:9px;border-radius:10px;font-size:12px;transition:.18s;margin-top:8px}
+.side-foot button:hover{border-color:var(--danger);color:var(--danger)}
+
+.main{padding:34px 40px 60px;max-width:1100px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.page-head h2{font-size:24px;font-weight:600;letter-spacing:1px}
+.page-head p{color:var(--ink-faint);font-size:13px;margin-top:4px}
+
+/* ---------- 按钮 ---------- */
+.btn{padding:9px 18px;border-radius:11px;border:1px solid var(--line);background:var(--glass-2);
+  color:var(--ink);font-size:13.5px;transition:.18s}
+.btn:hover{border-color:var(--blue-deep);color:var(--blue-bright)}
+.btn-primary{background:linear-gradient(120deg,#4a5d86,#6a7fb0);border:none;color:#fff;font-weight:500}
+.btn-primary:hover{filter:brightness(1.12);color:#fff}
+.btn-ghost{background:transparent}
+.btn-danger{border-color:rgba(232,139,139,.4);color:var(--danger);background:transparent}
+.btn-danger:hover{background:rgba(232,139,139,.12)}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:9px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* ---------- 卡片/统计 ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:30px}
+.card{padding:22px;border-radius:var(--radius);background:var(--glass);border:1px solid var(--line);
+  box-shadow:var(--shadow);backdrop-filter:blur(12px)}
+.card .k{font-size:12px;color:var(--ink-faint);letter-spacing:1px}
+.card .v{font-size:32px;font-weight:600;margin-top:6px;color:var(--blue-bright)}
+.card .d{font-size:12px;color:var(--ink-soft);margin-top:4px}
+
+.panel{padding:24px;border-radius:var(--radius);background:var(--glass);border:1px solid var(--line);
+  box-shadow:var(--shadow);backdrop-filter:blur(12px);margin-bottom:22px}
+.panel h3{font-size:16px;font-weight:600;margin-bottom:14px;letter-spacing:.5px}
+.panel .note{font-size:12.5px;color:var(--ink-faint);line-height:1.7}
+
+.tip{padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.7;
+  background:rgba(232,192,125,.08);border:1px solid rgba(232,192,125,.28);color:var(--warn);margin-bottom:18px}
+.tip.ok{background:rgba(127,214,160,.08);border-color:rgba(127,214,160,.28);color:var(--ok)}
+
+/* ---------- 表格 ---------- */
+.table{width:100%;border-collapse:collapse;font-size:13.5px}
+.table th{text-align:left;color:var(--ink-faint);font-weight:500;font-size:12px;letter-spacing:1px;
+  padding:10px 12px;border-bottom:1px solid var(--line)}
+.table td{padding:12px;border-bottom:1px solid rgba(159,180,216,.08);vertical-align:middle}
+.table tr:hover td{background:rgba(159,180,216,.04)}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;background:rgba(93,115,160,.2);
+  color:var(--blue);margin:2px 3px 2px 0}
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;border:1px solid var(--line);color:var(--ink-soft)}
+.muted{color:var(--ink-faint)}
+.empty{text-align:center;color:var(--ink-faint);padding:40px;font-size:14px}
+
+/* ---------- 表单 ---------- */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.5px}
+.field input,.field textarea,.field select{width:100%;padding:11px 13px;border-radius:11px;
+  background:rgba(10,14,26,.6);border:1px solid var(--line);color:var(--ink);font-size:14px;outline:none;transition:.2s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--blue-deep);box-shadow:0 0 0 3px rgba(93,115,160,.18)}
+.field textarea{min-height:120px;resize:vertical;line-height:1.7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}.app{grid-template-columns:1fr}.side{position:relative;height:auto;flex-direction:row;flex-wrap:wrap}.nav{flex-direction:row;flex-wrap:wrap}.main{padding:24px 18px}}
+
+/* ---------- 弹窗 ---------- */
+.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-start;justify-content:center;
+  padding:40px 20px;background:rgba(4,5,11,.6);backdrop-filter:blur(6px);overflow:auto}
+.modal-card{width:min(94vw,640px);border-radius:20px;background:var(--bg-soft);border:1px solid var(--line);
+  box-shadow:var(--shadow);padding:28px 30px}
+.modal-card h3{font-size:18px;font-weight:600;margin-bottom:20px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(20px);z-index:99;
+  background:rgba(20,26,44,.95);border:1px solid var(--line);color:var(--ink);padding:12px 22px;border-radius:12px;
+  font-size:13.5px;opacity:0;transition:.3s;box-shadow:var(--shadow);pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="nebula"></div>
+<canvas id="stars"></canvas>
+
+<!-- 登录门 -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <h1>星屑文库 · <span style="color:var(--blue-bright)">后台</span></h1>
+    <div class="sub">管理你的银河 · 仅本机可见</div>
+    <form id="gate-form">
+      <input type="password" id="pwd" placeholder="管理密码" autocomplete="current-password" />
+      <div class="hint" id="gate-hint"></div>
+      <button class="btn btn-primary" type="submit" style="width:100%">进入后台</button>
+    </form>
+    <div class="sub" style="margin-top:18px;margin-bottom:0">默认密码 starlight，可在「站点设置」修改</div>
+  </div>
+</div>
+
+<!-- 主体 -->
+<div class="app hidden" id="app">
+  <aside class="side">
+    <div class="brand">星屑<span>文库</span></div>
+    <div class="brand-sub">ADMIN CONSOLE</div>
+    <nav class="nav" id="nav">
+      <a href="#" data-tab="dash" class="active"><span class="ic">✦</span> 概览</a>
+      <a href="#" data-tab="articles"><span class="ic">✍</span> 文章管理</a>
+      <a href="#" data-tab="series"><span class="ic">❖</span> 合集管理</a>
+      <a href="#" data-tab="visits"><span class="ic">◐</span> 访问记录</a>
+      <a href="#" data-tab="settings"><span class="ic">⚙</span> 站点设置</a>
+      <a href="#" data-tab="data"><span class="ic">⇅</span> 数据导入导出</a>
+    </nav>
+    <div class="side-foot">
+      数据存于本机浏览器<br/>不上传任何服务器
+      <button id="logout">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============ 工具 ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const LS_KEY="starlit_admin_data";
+const LS_VISIT="starlit_admin_visits";
+let DATA=null;
+
+/* 远程后端地址（EdgeOne Pages）。
+   - 若把 admin.html 一起部署到站点，同域，留空即可（相对路径 /visit）。
+   - 若在本机双击打开 admin.html，请填线上域名，例如 https://your-site.edgeone.app */
+const REMOTE={ API_BASE:"" };
+
+async function sha256(s){
+  const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200)}
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function uid(p){return p+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function today(){return new Date().toISOString().slice(0,10)}
+function fmtContent(raw){
+  if(/<p[\s>]/i.test(raw))return raw;
+  return raw.split(/\n{1,}/).map(s=>s.trim()).filter(Boolean).map(p=>`<p>${esc(p).replace(/\n/g,"<br>")}</p>`).join("");
+}
+
+/* ============ 默认数据 ============ */
+function defaultData(){
+  return {
+    site:{title:"星屑文库",subtitle:"把温柔的故事，收进一片只属于你的银河",owner:"夜航",
+      requirePassword:true,passwordHint:"这是我们之间的小暗号",
+      passwordHash:"1da0672bd372f181d79fd5391aaeda10d256ebfd95ddb09ab9b51e52affbdbfc"},
+    series:[],articles:[]
+  };
+}
+function load(){
+  try{DATA=JSON.parse(localStorage.getItem(LS_KEY))||defaultData()}catch{DATA=defaultData()}
+  if(!DATA.site)DATA.site=defaultData().site;
+  DATA.series=DATA.series||[];DATA.articles=DATA.articles||[];
+}
+function save(){localStorage.setItem(LS_KEY,JSON.stringify(DATA))}
+
+/* 访问记录（本机模拟；真实记录需接后端） */
+function loadVisits(){try{return JSON.parse(localStorage.getItem(LS_VISIT))||seedVisits()}catch{return seedVisits()}}
+function seedVisits(){
+  const nicks=["夜航","星尘","无名读者","阿昭","凛","慢船","拾星人"];
+  const arr=[];const now=Date.now();
+  for(let i=0;i<14;i++){
+    arr.push({t:new Date(now-i*3600*1000*Math.ceil(Math.random()*7)).toISOString(),
+      nick:nicks[Math.floor(Math.random()*nicks.length)],
+      ok:Math.random()>0.15,ua:Math.random()>.5?"手机":"电脑"});
+  }
+  localStorage.setItem(LS_VISIT,JSON.stringify(arr));return arr;
+}
+
+/* ============ 登录 ============ */
+function setupGate(){
+  if(sessionStorage.getItem("admin_gate")==="open"){openApp();return}
+  $("#gate-form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const pwd=$("#pwd").value;
+    if(!pwd){$("#gate-hint").textContent="请输入密码";return}
+    const ok=(await sha256(pwd))===DATA.site.passwordHash;
+    if(!ok){$("#gate-hint").textContent="密码不对，默认是 starlight";return}
+    sessionStorage.setItem("admin_gate","open");openApp();
+  });
+}
+function openApp(){$("#gate").classList.add("hidden");$("#app").classList.remove("hidden");render("dash")}
+$("#logout").addEventListener("click",()=>{sessionStorage.removeItem("admin_gate");location.reload()});
+
+/* ============ 路由 ============ */
+$("#nav").addEventListener("click",e=>{
+  const a=e.target.closest("a");if(!a)return;e.preventDefault();
+  $$("#nav a").forEach(x=>x.classList.toggle("active",x===a));
+  render(a.dataset.tab);
+});
+function render(tab){
+  const m=$("#main");
+  if(tab==="dash")m.innerHTML=viewDash();
+  else if(tab==="articles"){m.innerHTML=viewArticles();bindArticles()}
+  else if(tab==="series"){m.innerHTML=viewSeries();bindSeries()}
+  else if(tab==="visits"){m.innerHTML=viewVisits();fillVisits()}
+  else if(tab==="settings"){m.innerHTML=viewSettings();bindSettings()}
+  else if(tab==="data"){m.innerHTML=viewData();bindData()}
+  m.scrollTop=0;
+}
+
+/* ============ 概览 ============ */
+function viewDash(){
+  const v=loadVisits();
+  const todayV=v.filter(x=>x.t.slice(0,10)===today()).length;
+  return `
+  <div class="page-head"><div><h2>概览</h2><p>你的银河现状 · ${esc(DATA.site.title)}</p></div></div>
+  <div class="cards">
+    <div class="card"><div class="k">文章总数</div><div class="v">${DATA.articles.length}</div><div class="d">篇收藏</div></div>
+    <div class="card"><div class="k">合集数</div><div class="v">${DATA.series.length}</div><div class="d">个系列</div></div>
+    <div class="card"><div class="k">今日访问</div><div class="v">${todayV}</div><div class="d">次（本机模拟）</div></div>
+    <div class="card"><div class="k">密码保护</div><div class="v" style="font-size:22px">${DATA.site.requirePassword?"已开":"关闭"}</div><div class="d">前端校验</div></div>
+  </div>
+  <div class="panel">
+    <h3>快速开始</h3>
+    <p class="note">
+      1. 在「文章管理」新增 / 编辑文章，在「合集管理」组织系列。<br/>
+      2. 改完后到「数据导入导出」→ <b>导出 articles.json</b>，覆盖仓库里的 <code>data/articles.json</code> 再推送，站点即更新。<br/>
+      3. 已按 <b>EdgeOne Pages</b> 备好后端（<code>functions/</code> 目录）：部署后即可<b>网页直接保存</b>、看<b>真实访问记录</b>，且大陆可稳定访问、不被墙。
+    </p>
+  </div>`;
+}
+
+/* ============ 文章管理 ============ */
+function seriesName(id){const s=DATA.series.find(x=>x.id===id);return s?s.name:""}
+function viewArticles(){
+  const rows=DATA.articles.map(a=>`
+    <tr>
+      <td><div style="color:var(--blue-bright)">${esc(a.title)}</div>
+          <div class="muted" style="font-size:11px">${a.updatedAt||""}</div></td>
+      <td>${a.seriesId?`<span class="pill">${esc(seriesName(a.seriesId))} · ${a.order||0}</span>`:'<span class="muted">单篇</span>'}</td>
+      <td>${esc(a.fandom||"")}<div class="muted" style="font-size:11px">${esc(a.cp||"")}</div></td>
+      <td>${(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")||'<span class="muted">—</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-ghost" data-edit="${a.id}">编辑</button>
+        <button class="btn btn-sm btn-danger" data-del="${a.id}">删</button>
+      </td>
+    </tr>`).join("");
+  return `
+  <div class="page-head"><div><h2>文章管理</h2><p>共 ${DATA.articles.length} 篇</p></div>
+    <button class="btn btn-primary" id="add-art">+ 新增文章</button></div>
+  <div class="panel" style="padding:8px 8px 0">
+    <table class="table">
+      <thead><tr><th>标题</th><th>合集</th><th>作品 / CP</th><th>标签</th><th>操作</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="5"><div class="empty">还没有文章，点右上角「新增文章」开始 ✦</div></td></tr>`}</tbody>
+    </table>
+  </div>`;
+}
+function bindArticles(){
+  $("#add-art").addEventListener("click",()=>articleModal(null));
+  $$("[data-edit]").forEach(b=>b.addEventListener("click",()=>articleModal(b.dataset.edit)));
+  $$("[data-del]").forEach(b=>b.addEventListener("click",()=>{
+    const a=DATA.articles.find(x=>x.id===b.dataset.del);
+    if(confirm(`确定删除《${a.title}》？此操作不可撤销`)){
+      DATA.articles=DATA.articles.filter(x=>x.id!==b.dataset.del);save();render("articles");toast("已删除")}
+  }));
+}
+function articleModal(id){
+  const a=id?DATA.articles.find(x=>x.id===id):{tags:[],source:{}};
+  const seriesOpts=`<option value="">（不属于合集 · 单篇）</option>`+
+    DATA.series.map(s=>`<option value="${s.id}" ${a.seriesId===s.id?"selected":""}>${esc(s.name)}</option>`).join("");
+  openModal(`${id?"编辑文章":"新增文章"}`,`
+    <div class="field"><label>标题</label><input id="m-title" value="${esc(a.title||"")}" placeholder="第一章 · ……"/></div>
+    <div class="grid2">
+      <div class="field"><label>所属合集</label><select id="m-series">${seriesOpts}</select></div>
+      <div class="field"><label>合集内序号</label><input id="m-order" type="number" value="${a.order||0}"/></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>作品 / 世界观</label><input id="m-fandom" value="${esc(a.fandom||"")}" placeholder="原创宇宙"/></div>
+      <div class="field"><label>CP</label><input id="m-cp" value="${esc(a.cp||"")}" placeholder="凛 × 昭"/></div>
+    </div>
+    <div class="field"><label>标签（逗号分隔）</label><input id="m-tags" value="${esc((a.tags||[]).join(", "))}" placeholder="温柔, 治愈, 慢热"/></div>
+    <div class="field"><label>作者有话说</label><textarea id="m-note" style="min-height:70px">${esc(a.authorNote||"")}</textarea></div>
+    <div class="grid2">
+      <div class="field"><label>封面符号</label><input id="m-cover" value="${esc(a.cover||"✦")}" maxlength="2"/></div>
+      <div class="field"><label>原文链接（可选）</label><input id="m-url" value="${esc(a.source&&a.source.url||"")}" placeholder="https://weibo.com/…"/></div>
+    </div>
+    <div class="field"><label>正文（可粘贴纯文本或 HTML）</label><textarea id="m-content" placeholder="在这里写 / 粘贴正文…">${esc(stripP(a.content||""))}</textarea></div>
+  `,()=>{
+    const title=$("#m-title").value.trim();
+    const raw=$("#m-content").value.trim();
+    if(!title||!raw){toast("标题和正文都不能空");return false}
+    const obj={
+      id:id||uid("a"),title,
+      seriesId:$("#m-series").value||null,
+      order:parseInt($("#m-order").value||"0",10),
+      fandom:$("#m-fandom").value.trim(),cp:$("#m-cp").value.trim(),
+      tags:$("#m-tags").value.split(/[,，]/).map(t=>t.trim()).filter(Boolean),
+      authorNote:$("#m-note").value.trim(),
+      cover:$("#m-cover").value.trim()||"✦",
+      source:{type:(a.source&&a.source.type)||"manual",url:$("#m-url").value.trim()},
+      updatedAt:today(),content:fmtContent(raw)
+    };
+    if(id){const i=DATA.articles.findIndex(x=>x.id===id);DATA.articles[i]=obj}
+    else DATA.articles.push(obj);
+    save();render("articles");toast(id?"已保存":"已新增");return true;
+  });
+}
+function stripP(html){return (html||"").replace(/<\/p>\s*<p>/gi,"\n").replace(/<\/?p>/gi,"").replace(/<br\s*\/?>/gi,"\n").replace(/<[^>]+>/g,"")}
+
+/* ============ 合集管理 ============ */
+function viewSeries(){
+  const rows=DATA.series.map(s=>{
+    const cnt=DATA.articles.filter(a=>a.seriesId===s.id).length;
+    return `<tr>
+      <td><div style="color:var(--blue-bright)">${esc(s.name)}</div><div class="muted" style="font-size:11px">${esc(s.desc||"")}</div></td>
+      <td>${esc(s.fandom||"")}</td><td>${esc(s.cp||"")}</td>
+      <td><span class="pill">${cnt} 篇</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-ghost" data-sedit="${s.id}">编辑</button>
+        <button class="btn btn-sm btn-danger" data-sdel="${s.id}">删</button></td>
+    </tr>`}).join("");
+  return `
+  <div class="page-head"><div><h2>合集管理</h2><p>共 ${DATA.series.length} 个系列</p></div>
+    <button class="btn btn-primary" id="add-series">+ 新增合集</button></div>
+  <div class="panel" style="padding:8px 8px 0">
+    <table class="table">
+      <thead><tr><th>合集</th><th>作品</th><th>CP</th><th>文章数</th><th>操作</th></tr></thead>
+      <tbody>${rows||`<tr><td colspan="5"><div class="empty">还没有合集 ❖</div></td></tr>`}</tbody>
+    </table>
+  </div>`;
+}
+function bindSeries(){
+  $("#add-series").addEventListener("click",()=>seriesModal(null));
+  $$("[data-sedit]").forEach(b=>b.addEventListener("click",()=>seriesModal(b.dataset.sedit)));
+  $$("[data-sdel]").forEach(b=>b.addEventListener("click",()=>{
+    const s=DATA.series.find(x=>x.id===b.dataset.sdel);
+    const cnt=DATA.articles.filter(a=>a.seriesId===s.id).length;
+    if(confirm(`删除合集《${s.name}》？其下 ${cnt} 篇文章将变为单篇（不会删除文章）`)){
+      DATA.articles.forEach(a=>{if(a.seriesId===s.id)a.seriesId=null});
+      DATA.series=DATA.series.filter(x=>x.id!==b.dataset.sdel);save();render("series");toast("已删除合集")}
+  }));
+}
+function seriesModal(id){
+  const s=id?DATA.series.find(x=>x.id===id):{};
+  openModal(id?"编辑合集":"新增合集",`
+    <div class="field"><label>合集名称</label><input id="s-name" value="${esc(s.name||"")}" placeholder="银河彼端"/></div>
+    <div class="grid2">
+      <div class="field"><label>作品 / 世界观</label><input id="s-fandom" value="${esc(s.fandom||"")}"/></div>
+      <div class="field"><label>CP</label><input id="s-cp" value="${esc(s.cp||"")}"/></div>
+    </div>
+    <div class="field"><label>简介</label><textarea id="s-desc" style="min-height:70px">${esc(s.desc||"")}</textarea></div>
+  `,()=>{
+    const name=$("#s-name").value.trim();
+    if(!name){toast("合集名称不能空");return false}
+    const obj={id:id||uid("s"),name,fandom:$("#s-fandom").value.trim(),cp:$("#s-cp").value.trim(),desc:$("#s-desc").value.trim()};
+    if(id){const i=DATA.series.findIndex(x=>x.id===id);DATA.series[i]=obj}else DATA.series.push(obj);
+    save();render("series");toast(id?"已保存":"已新增");return true;
+  });
+}
+
+/* ============ 访问记录 ============ */
+function viewVisits(){
+  return `
+  <div class="page-head"><div><h2>访问记录</h2><p>你的文库被访问的真实情况</p></div>
+    <button class="btn btn-ghost btn-sm" onclick="render('visits')">刷新</button></div>
+  <div id="visit-body"><div class="tip">正在读取访问数据…</div></div>`;
+}
+
+/* 优先从 EdgeOne Pages 的 /visit 接口拉真实数据，失败则回退本机模拟 */
+async function fillVisits(){
+  const box=$("#visit-body");
+  try{
+    const r=await fetch(REMOTE.API_BASE+"/visit",{cache:"no-store"});
+    const d=await r.json();
+    if(d && d.ok){ box.innerHTML=renderRealVisits(d); return; }
+    throw new Error(d && d.reason ? d.reason : "后端未返回有效数据");
+  }catch(e){
+    box.innerHTML=renderMockVisits(e.message||"连接后端失败");
+  }
+}
+
+function renderRealVisits(d){
+  const week=d.week||[];
+  const max=Math.max(1,...week.map(x=>x.count));
+  const bars=week.map(x=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">
+      <div style="font-size:12px;color:var(--muted)">${x.count}</div>
+      <div style="width:60%;height:${Math.round(x.count/max*90)+6}px;background:linear-gradient(180deg,var(--blue-bright),rgba(108,166,255,.25));border-radius:4px 4px 0 0"></div>
+      <div style="font-size:11px;color:var(--muted)">${x.date.slice(5)}</div>
+    </div>`).join("");
+  const idTitle=(id)=>{const a=(DATA.articles||[]).find(x=>x.id===id);return a?a.title:id;};
+  const tops=(d.topArticles||[]).map((x,i)=>`<tr>
+    <td style="color:var(--muted)">${i+1}</td>
+    <td style="color:var(--blue-bright)">${esc(idTitle(x.id))}</td>
+    <td>${x.count}</td></tr>`).join("")||`<tr><td colspan="3" class="muted">暂无文章阅读记录</td></tr>`;
+  return `
+  <div class="tip" style="border-color:rgba(127,214,160,.4);color:var(--ok)">✓ 已连接后端，以下为真实访问数据（KV 存储）。</div>
+  <div class="cards">
+    <div class="card"><div class="k">累计访问</div><div class="v">${d.total||0}</div><div class="d">次</div></div>
+    <div class="card"><div class="k">今日访问</div><div class="v">${d.today||0}</div><div class="d">次（中国时区）</div></div>
+    <div class="card"><div class="k">热门文章</div><div class="v">${(d.topArticles||[]).length}</div><div class="d">篇有阅读</div></div>
+  </div>
+  <div class="panel"><h3>近 7 天访问趋势</h3>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:140px;padding:10px 4px">${bars}</div>
+  </div>
+  <div class="panel" style="padding:8px 8px 0"><h3 style="padding:8px 8px 0">热门文章 TOP 10</h3>
+    <table class="table"><thead><tr><th>#</th><th>标题</th><th>阅读数</th></tr></thead><tbody>${tops}</tbody></table>
+  </div>`;
+}
+
+function renderMockVisits(reason){
+  const v=loadVisits().slice().sort((a,b)=>b.t.localeCompare(a.t));
+  const rows=v.map(x=>`<tr>
+    <td>${new Date(x.t).toLocaleString("zh-CN")}</td>
+    <td style="color:var(--blue-bright)">${esc(x.nick)}</td>
+    <td>${x.ok?'<span class="pill" style="color:var(--ok);border-color:rgba(127,214,160,.4)">通过</span>':'<span class="pill" style="color:var(--danger);border-color:rgba(232,139,139,.4)">密码错</span>'}</td>
+    <td><span class="muted">${x.ua}</span></td>
+  </tr>`).join("");
+  return `
+  <div class="tip">⚠️ 未连上后端（${esc(reason)}），下面是<b>本机模拟数据</b>。<br/>
+    部署到 EdgeOne Pages 并绑定 KV 后，这里会自动显示真实访问统计。若在本机打开本页，请把上方代码里的 <code>REMOTE.API_BASE</code> 填成你的线上域名。</div>
+  <div class="panel" style="padding:8px 8px 0">
+    <table class="table">
+      <thead><tr><th>时间</th><th>昵称</th><th>结果</th><th>设备</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+/* ============ 站点设置 ============ */
+function viewSettings(){
+  const s=DATA.site;
+  return `
+  <div class="page-head"><div><h2>站点设置</h2><p>标题、暗号、访问密码</p></div></div>
+  <div class="panel">
+    <div class="field"><label>站点标题</label><input id="st-title" value="${esc(s.title||"")}"/></div>
+    <div class="field"><label>副标题</label><input id="st-sub" value="${esc(s.subtitle||"")}"/></div>
+    <div class="grid2">
+      <div class="field"><label>主人昵称</label><input id="st-owner" value="${esc(s.owner||"")}"/></div>
+      <div class="field"><label>密码提示语</label><input id="st-hint" value="${esc(s.passwordHint||"")}"/></div>
+    </div>
+    <div class="field"><label style="display:flex;gap:8px;align-items:center">
+      <input type="checkbox" id="st-req" style="width:auto" ${s.requirePassword?"checked":""}/> 开启访问密码</label></div>
+    <button class="btn btn-primary" id="st-save">保存设置</button>
+  </div>
+  <div class="panel">
+    <h3>修改访问密码</h3>
+    <p class="note" style="margin-bottom:14px">输入新密码后自动计算 SHA-256 存入。前端校验适合熟人分享；真正防暴力需接后端。</p>
+    <div class="grid2">
+      <div class="field"><label>新密码</label><input type="text" id="st-pwd" placeholder="留空则不修改"/></div>
+      <div class="field"><label>当前哈希</label><input value="${esc(s.passwordHash||"")}" readonly style="font-size:11px;color:var(--ink-faint)"/></div>
+    </div>
+    <button class="btn" id="st-pwd-save">更新密码</button>
+  </div>`;
+}
+function bindSettings(){
+  $("#st-save").addEventListener("click",()=>{
+    DATA.site.title=$("#st-title").value.trim();
+    DATA.site.subtitle=$("#st-sub").value.trim();
+    DATA.site.owner=$("#st-owner").value.trim();
+    DATA.site.passwordHint=$("#st-hint").value.trim();
+    DATA.site.requirePassword=$("#st-req").checked;
+    save();toast("设置已保存");
+  });
+  $("#st-pwd-save").addEventListener("click",async()=>{
+    const p=$("#st-pwd").value;if(!p){toast("请输入新密码");return}
+    DATA.site.passwordHash=await sha256(p);save();render("settings");toast("密码已更新");
+  });
+}
+
+/* ============ 数据导入导出 ============ */
+function viewData(){
+  return `
+  <div class="page-head"><div><h2>数据导入导出</h2><p>与仓库的 data/articles.json 对接</p></div></div>
+  <div class="tip ok">✓ 这里生成的 articles.json 与站点完全兼容：导出后覆盖仓库 <code>data/articles.json</code> 再推送即可上线。</div>
+  <div class="panel">
+    <h3>导出</h3>
+    <p class="note" style="margin-bottom:14px">把当前后台的全部数据（站点设置 + 合集 + 文章）导出为标准 articles.json。</p>
+    <div class="row">
+      <button class="btn btn-primary" id="d-export">⬇ 下载 articles.json</button>
+      <button class="btn" id="d-copy">复制 JSON</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>导入</h3>
+    <p class="note" style="margin-bottom:14px">从现有 articles.json 载入（会<b>覆盖</b>当前后台数据）。可上传文件，或从线上站点抓取。</p>
+    <div class="row" style="margin-bottom:14px">
+      <input type="file" id="d-file" accept=".json,application/json" style="font-size:12px"/>
+    </div>
+    <div class="field"><label>或从 URL 抓取（如 https://你的名.github.io/starlit-fanfic/data/articles.json）</label>
+      <div class="row"><input id="d-url" placeholder="https://…/data/articles.json" style="flex:1"/>
+      <button class="btn" id="d-url-btn">抓取导入</button></div>
+    </div>
+    <div class="field"><label>或直接粘贴 JSON</label><textarea id="d-paste" placeholder='{"site":…,"series":[…],"articles":[…]}'></textarea>
+      <div class="row" style="margin-top:10px"><button class="btn" id="d-paste-btn">从粘贴导入</button></div>
+    </div>
+  </div>`;
+}
+function bindData(){
+  $("#d-export").addEventListener("click",()=>{
+    const out={site:DATA.site,series:DATA.series,articles:DATA.articles};
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);const a=document.createElement("a");
+    a.href=url;a.download="articles.json";a.click();URL.revokeObjectURL(url);toast("已下载 articles.json");
+  });
+  $("#d-copy").addEventListener("click",async()=>{
+    await navigator.clipboard.writeText(JSON.stringify({site:DATA.site,series:DATA.series,articles:DATA.articles},null,2));
+    toast("已复制到剪贴板");
+  });
+  $("#d-file").addEventListener("change",e=>{
+    const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>importJSON(r.result);r.readAsText(f);
+  });
+  $("#d-url-btn").addEventListener("click",async()=>{
+    const u=$("#d-url").value.trim();if(!u){toast("请填写 URL");return}
+    try{const r=await fetch(u,{cache:"no-store"});importJSON(await r.text())}
+    catch{toast("抓取失败，可能是跨域或网络问题")}
+  });
+  $("#d-paste-btn").addEventListener("click",()=>importJSON($("#d-paste").value));
+}
+function importJSON(txt){
+  try{
+    const o=JSON.parse(txt);
+    if(!o.articles)throw 0;
+    DATA={site:o.site||defaultData().site,series:o.series||[],articles:o.articles||[]};
+    save();toast(`已导入 ${DATA.articles.length} 篇文章`);render("dash");
+    $$("#nav a").forEach(x=>x.classList.toggle("active",x.dataset.tab==="dash"));
+  }catch{toast("JSON 格式不对，导入失败")}
+}
+
+/* ============ 弹窗 ============ */
+function openModal(title,body,onOk){
+  const el=document.createElement("div");el.className="modal";
+  el.innerHTML=`<div class="modal-card"><h3>${title}</h3>${body}
+    <div class="modal-foot"><button class="btn btn-ghost" data-cancel>取消</button>
+    <button class="btn btn-primary" data-ok>保存</button></div></div>`;
+  document.body.appendChild(el);
+  const close=()=>el.remove();
+  el.addEventListener("click",e=>{if(e.target===el)close()});
+  el.querySelector("[data-cancel]").addEventListener("click",close);
+  el.querySelector("[data-ok]").addEventListener("click",()=>{if(onOk()!==false)close()});
+}
+
+/* ============ 星空背景 ============ */
+(function stars(){
+  const c=$("#stars"),x=c.getContext("2d");let w,h,st=[];
+  function rs(){w=c.width=innerWidth;h=c.height=innerHeight;
+    st=Array.from({length:Math.min(140,w/10|0)},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.3+.2,a:Math.random(),s:Math.random()*.02+.005}))}
+  function draw(){x.clearRect(0,0,w,h);for(const p of st){p.a+=p.s;if(p.a>1||p.a<0)p.s*=-1;
+    x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fillStyle=`rgba(200,215,245,${Math.abs(p.a)*.8})`;x.fill()}requestAnimationFrame(draw)}
+  rs();draw();addEventListener("resize",rs);
+})();
+
+/* ============ 启动 ============ */
+load();setupGate();
+</script>
+</body>
+</html>
